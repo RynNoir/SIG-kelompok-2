@@ -685,33 +685,44 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
         // ===================================
         
         function selectSchool(schoolId) {
-            // Remove previous selection
+            // Hilangkan highlight card sebelumnya
             document.querySelectorAll('.school-card').forEach(card => {
                 card.classList.remove('active');
             });
-            
-            // Add active class
+
+            // Tambahkan highlight pada card yang diklik
             const card = document.querySelector(`[data-id="${schoolId}"]`);
             if (card) {
                 card.classList.add('active');
                 card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
-            
-            // Find school data
-            const school = sekolahData.find(s => s.id === schoolId);
+
+            // Ambil data sekolah
+            const school = sekolahData.find(s => s.id == schoolId);
             if (!school) return;
-            
-            // Pan map to school
-            map.setView([school.latitude, school.longitude], 16);
-            
-            // Open popup
-            const marker = schoolMarkers.find(m => m.schoolId === schoolId);
+
+            // Zoom ke lokasi sekolah
+            map.flyTo([school.latitude, school.longitude], 16, {
+                duration: 1.2,
+                easeLinearity: 0.25
+            });
+
+            // Cari marker sekolah
+            const marker = schoolMarkers.find(m => m.schoolId == schoolId);
+
             if (marker) {
-                marker.openPopup();
+                // BUAT ULANG POPUP SETIAP KALI DIKLIK DARI LIST
+                const popupHTML = createPopupContent(school);
+                marker.bindPopup(popupHTML).openPopup();
+
+                setTimeout(() => {
+                    marker.setIcon(originalIcon);
+                }, 2500);
             }
-            
+
             selectedSchoolId = schoolId;
         }
+
         
         // ===================================
         // HELPER FUNCTIONS
