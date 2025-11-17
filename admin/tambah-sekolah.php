@@ -20,6 +20,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $akreditasi = $_POST['akreditasi'];
     $kuota = intval($_POST['kuota']);
     $telepon = mysqli_real_escape_string($conn, $_POST['telepon']);
+    $kepala_sekolah = mysqli_real_escape_string($conn, $_POST['kepala_sekolah']);
+    $operator = mysqli_real_escape_string($conn, $_POST['operator']);
+    $email_sekolah = mysqli_real_escape_string($conn, $_POST['email_sekolah']);
     
     // UPLOAD FOTO
     $foto = '';
@@ -48,8 +51,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
     
     if (empty($error)) {
-        $query = "INSERT INTO sekolah (npsn, nama, alamat, kecamatan, latitude, longitude, radius, akreditasi, kuota, telepon, foto) 
-                  VALUES ('$npsn', '$nama', '$alamat', '$kecamatan', $latitude, $longitude, $radius, '$akreditasi', $kuota, '$telepon', '$foto')";
+        $query = "INSERT INTO sekolah (npsn, nama, alamat, kecamatan, latitude, longitude, radius, akreditasi, kuota, telepon, kepala_sekolah, operator, email_sekolah, foto) 
+                  VALUES ('$npsn', '$nama', '$alamat', '$kecamatan', $latitude, $longitude, $radius, '$akreditasi', $kuota, '$telepon', '$kepala_sekolah', '$operator', '$email_sekolah', '$foto')";
         
         if (mysqli_query($conn, $query)) {
             $success = 'Sekolah berhasil ditambahkan!';
@@ -149,10 +152,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                     <label>Kuota Siswa</label>
                                     <input type="number" class="form-control" name="kuota" value="256">
                                 </div>
-                            </div>
-                            <div class="mb-3">
-                                <label>Telepon</label>
-                                <input type="text" class="form-control" name="telepon">
+                                <div class="mb-3">
+                                    <label>Telepon</label>
+                                    <input type="text" class="form-control" name="telepon">
+                                </div>
+                                <div class="mb-3">
+                                    <label>Kepala Sekolah</label>
+                                    <input type="text" class="form-control" name="kepala_sekolah">
+                                </div>
+                                <div class="mb-3">
+                                    <label>Operator Sekolah</label>
+                                    <input type="text" class="form-control" name="operator">
+                                </div>
+                                <div class="mb-3">
+                                    <label>Email Sekolah</label>
+                                    <input type="email" class="form-control" name="email_sekolah">
+                                </div>
                             </div>
                         </div>
                     </div>

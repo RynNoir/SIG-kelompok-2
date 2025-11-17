@@ -59,6 +59,9 @@ $sekolah = mysqli_fetch_assoc($result);
                                 <p><strong>NPSN:</strong> <?php echo $sekolah['npsn']; ?></p>
                                 <p><strong>Alamat:</strong><br><?php echo $sekolah['alamat']; ?></p>
                                 <p><strong>Kecamatan:</strong> <?php echo $sekolah['kecamatan']; ?></p>
+                                <p><strong>kepala Sekolah:</strong> <?php echo $sekolah['kepala_sekolah']; ?></p>
+                                <p><strong>Email Sekolah:</strong> <?php echo $sekolah['email_sekolah']; ?></p>
+
                             </div>
                             <div class="col-md-6">
                                 <p><strong>Akreditasi:</strong> 
@@ -67,6 +70,7 @@ $sekolah = mysqli_fetch_assoc($result);
                                 <p><strong>Kuota Siswa:</strong> <?php echo $sekolah['kuota']; ?> siswa</p>
                                 <p><strong>Telepon:</strong> <?php echo $sekolah['telepon']; ?></p>
                                 <p><strong>Radius Zonasi:</strong> <?php echo $sekolah['radius']/1000; ?> km</p>
+                                <p><strong>operator:</strong> <?php echo $sekolah['operator']; ?></p>
                             </div>
                         </div>
 

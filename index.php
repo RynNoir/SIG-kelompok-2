@@ -494,7 +494,7 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
                         <strong>${school.akreditasi}</strong>
                     </p>
                     <a href="detail.php?id=${school.id}" 
-                       class="btn btn-primary btn-sm w-100">
+                       class="btn btn-primary btn-sm w-100 text-white">
                         <i class="bi bi-info-circle"></i> Lihat Detail
                     </a>
                 </div>

@@ -33,6 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $akreditasi = $_POST['akreditasi'];
     $kuota = intval($_POST['kuota']);
     $telepon = mysqli_real_escape_string($conn, $_POST['telepon']);
+    $kepala_sekolah = mysqli_real_escape_string($conn, $_POST['kepala_sekolah']);
+    $operator = mysqli_real_escape_string($conn, $_POST['operator']);
+    $email_sekolah = mysqli_real_escape_string($conn, $_POST['email_sekolah']);
     
     $foto = $sekolah['foto']; // Keep old photo
     
@@ -74,6 +77,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                   akreditasi = '$akreditasi',
                   kuota = $kuota,
                   telepon = '$telepon',
+                  kepala_sekolah = '$kepala_sekolah',
+                  operator = '$operator',
+                  email_sekolah = '$email_sekolah',
                   foto = '$foto'
                   WHERE id = $id";
         
@@ -208,6 +214,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 <label>Telepon</label>
                                 <input type="text" class="form-control" name="telepon" 
                                        value="<?php echo $sekolah['telepon']; ?>">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Kepala Sekolah</label>
+                                <input type="text" class="form-control" name="kepala_sekolah" 
+                                    value="<?php echo ($sekolah['kepala_sekolah']); ?>">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Operator Sekolah</label>
+                                <input type="text" class="form-control" name="operator" 
+                                    value="<?php echo ($sekolah['operator']); ?>">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email Sekolah</label>
+                                <input type="email" class="form-control" name="email_sekolah" 
+                                    value="<?php echo ($sekolah['email_sekolah']); ?>">
                             </div>
                         </div>
                     </div>
