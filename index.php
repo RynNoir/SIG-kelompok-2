@@ -317,36 +317,6 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
                         </div>
                     </div>
                     
-                    <!-- Pencarian Berdasarkan Lokasi -->
-                    <div class="row g-3 mt-2">
-                        <div class="col-lg-6">
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="bi bi-geo-alt"></i>
-                                </span>
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="searchAddress" 
-                                       placeholder="Cari berdasarkan alamat (contoh: Jl. Proklamasi, Padang)"
-                                       autocomplete="off">
-                            </div>
-                        </div>
-                        <div class="col-lg-3">
-                            <button type="button" 
-                                    onclick="cariSekolah()" 
-                                    class="btn btn-primary w-100">
-                                <i class="bi bi-search"></i> Cari Terdekat
-                            </button>
-                        </div>
-                        <div class="col-lg-3">
-                            <button type="button" 
-                                    onclick="getCurrentLocation()" 
-                                    class="btn btn-success w-100">
-                                <i class="bi bi-crosshair"></i> Lokasi Saya
-                            </button>
-                        </div>
-                    </div>
-                    
                     <div class="mt-3">
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" 
@@ -357,6 +327,11 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
                                 Tampilkan zona sekolah (radius 2 km)
                             </label>
                         </div>
+                        <button type="button" 
+                                onclick="getCurrentLocation()" 
+                                class="btn btn-success btn-sm ms-2">
+                            <i class="bi bi-crosshair"></i> Gunakan Lokasi Saya
+                        </button>
                     </div>
                 </form>
             </div>
@@ -642,7 +617,6 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
         // Reset all filters
         function resetAllFilters() {
             document.getElementById('searchSchool').value = '';
-            document.getElementById('searchAddress').value = '';
             document.getElementById('filterKecamatan').value = '';
             document.getElementById('clearSchoolSearch').style.display = 'none';
             
@@ -740,27 +714,6 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
         }
         
         // ===================================
-        // SEARCH FUNCTION (LOKASI)
-        // ===================================
-        
-        function cariSekolah() {
-            const address = document.getElementById('searchAddress').value.trim();
-            
-            if (!address) {
-                alert('Silakan masukkan alamat terlebih dahulu!');
-                document.getElementById('searchAddress').focus();
-                return;
-            }
-            
-            // Simulasi geocoding (untuk demo)
-            // Dalam production, gunakan API Nominatim
-            const userLat = -0.9371 + (Math.random() - 0.5) * 0.04;
-            const userLng = 100.3600 + (Math.random() - 0.5) * 0.04;
-            
-            setUserLocation(userLat, userLng);
-        }
-        
-        // ===================================
         // GET CURRENT LOCATION
         // ===================================
         
@@ -778,7 +731,7 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
                     );
                 },
                 function(error) {
-                    alert('Tidak dapat mengakses lokasi Anda. Silakan cari alamat secara manual.');
+                    alert('Tidak dapat mengakses lokasi Anda. Pastikan Anda memberikan izin akses lokasi.');
                     console.error('Geolocation error:', error);
                 }
             );
@@ -1020,13 +973,6 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
         document.getElementById('filterKecamatan').addEventListener('change', function() {
             currentFilterKecamatan = this.value;
             filterSchools();
-        });
-        
-        // Enter key on search address
-        document.getElementById('searchAddress').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                cariSekolah();
-            }
         });
         
         // ===================================
