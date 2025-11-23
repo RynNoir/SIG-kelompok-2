@@ -327,6 +327,11 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
                                 Tampilkan zona sekolah (radius 2 km)
                             </label>
                         </div>
+                        <button type="button" 
+                                onclick="getCurrentLocation()" 
+                                class="btn btn-success btn-sm ms-2">
+                            <i class="bi bi-crosshair"></i> Gunakan Lokasi Saya
+                        </button>
                     </div>
                 </form>
             </div>
