@@ -1,7 +1,7 @@
 <?php
 /**
  * Homepage - Sistem Zonasi SMP Padang
- * Fitur: Peta interaktif, pencarian, foto sekolah
+ * Fitur: Peta interaktif, pencarian, foto sekolah, pencarian nama/NPSN
  */
 require_once 'koneksi.php';
 
@@ -149,6 +149,47 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
             padding: 2rem;
         }
         
+        /* Search Suggestions */
+        .search-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: none;
+        }
+        
+        .search-suggestions.show {
+            display: block;
+        }
+        
+        .suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+        
+        .suggestion-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        
+        .suggestion-highlight {
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             #map {
@@ -226,11 +267,36 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
         <div class="card shadow-sm mb-4">
             <div class="card-body">
                 <h5 class="card-title mb-3">
-                    <i class="bi bi-search"></i> Filter Sekolah
+                    <i class="bi bi-search"></i> Cari Sekolah
                 </h5>
                 <form id="searchForm" onsubmit="return false;">
                     <div class="row g-3">
+                        <!-- Pencarian Nama/NPSN Sekolah -->
                         <div class="col-lg-6">
+                            <div class="position-relative">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="bi bi-building"></i>
+                                    </span>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="searchSchool" 
+                                           placeholder="Cari nama sekolah atau NPSN..."
+                                           autocomplete="off">
+                                    <button type="button" 
+                                            class="btn btn-outline-secondary" 
+                                            id="clearSchoolSearch"
+                                            style="display: none;"
+                                            onclick="clearSchoolSearch()">
+                                        <i class="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                                <div id="schoolSuggestions" class="search-suggestions"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Filter Kecamatan -->
+                        <div class="col-lg-3">
                             <select class="form-select" id="filterKecamatan">
                                 <option value="">Semua Kecamatan</option>
                                 <option value="Lubuk Begalung">Lubuk Begalung</option>
@@ -240,11 +306,13 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
                                 <option value="Lubuk Kilangan">Lubuk Kilangan</option>
                             </select>
                         </div>
-                        <div class="col-lg-6">
+                        
+                        <!-- Button Reset -->
+                        <div class="col-lg-3">
                             <button type="button" 
-                                    onclick="getCurrentLocation()" 
-                                    class="btn btn-success w-100">
-                                <i class="bi bi-crosshair"></i> Gunakan Lokasi Saya
+                                    onclick="resetAllFilters()" 
+                                    class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-arrow-clockwise"></i> Reset
                             </button>
                         </div>
                     </div>
@@ -393,6 +461,10 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
         let zoneCircles = [];
         let selectedSchoolId = null;
         
+        // Current filter state
+        let currentSearchSchool = '';
+        let currentFilterKecamatan = '';
+        
         // ===================================
         // INITIALIZE MAP
         // ===================================
@@ -412,22 +484,168 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
         }
         
         // ===================================
+        // PENCARIAN SEKOLAH (NAMA/NPSN)
+        // ===================================
+        
+        // Real-time search dengan suggestions
+        document.getElementById('searchSchool').addEventListener('input', function(e) {
+            const keyword = e.target.value.trim();
+            currentSearchSchool = keyword;
+            
+            // Tampilkan/sembunyikan tombol clear
+            document.getElementById('clearSchoolSearch').style.display = keyword ? 'block' : 'none';
+            
+            // Tampilkan suggestions
+            if (keyword.length >= 2) {
+                showSchoolSuggestions(keyword);
+            } else {
+                hideSchoolSuggestions();
+            }
+            
+            // Filter sekolah
+            filterSchools();
+        });
+        
+        // Tampilkan suggestions
+        function showSchoolSuggestions(keyword) {
+            const suggestions = document.getElementById('schoolSuggestions');
+            const filtered = sekolahData.filter(school => {
+                const nama = school.nama.toLowerCase();
+                const npsn = school.npsn ? school.npsn.toLowerCase() : '';
+                const key = keyword.toLowerCase();
+                return nama.includes(key) || npsn.includes(key);
+            });
+            
+            if (filtered.length === 0) {
+                suggestions.innerHTML = '<div class="suggestion-item text-muted">Tidak ada hasil</div>';
+                suggestions.classList.add('show');
+                return;
+            }
+            
+            let html = '';
+            filtered.slice(0, 5).forEach(school => {
+                const highlightedName = highlightText(school.nama, keyword);
+                const npsnText = school.npsn ? `<small class="text-muted">NPSN: ${school.npsn}</small>` : '';
+                
+                html += `
+                    <div class="suggestion-item" onclick="selectSchoolFromSuggestion(${school.id})">
+                        <div class="fw-bold">${highlightedName}</div>
+                        <small class="text-muted">${school.kecamatan}</small>
+                        ${npsnText}
+                    </div>
+                `;
+            });
+            
+            suggestions.innerHTML = html;
+            suggestions.classList.add('show');
+        }
+        
+        // Hide suggestions
+        function hideSchoolSuggestions() {
+            document.getElementById('schoolSuggestions').classList.remove('show');
+        }
+        
+        // Highlight text
+        function highlightText(text, keyword) {
+            const regex = new RegExp(`(${keyword})`, 'gi');
+            return text.replace(regex, '<span class="suggestion-highlight">$1</span>');
+        }
+        
+        // Select school from suggestion
+        function selectSchoolFromSuggestion(schoolId) {
+            const school = sekolahData.find(s => s.id == schoolId);
+            if (school) {
+                document.getElementById('searchSchool').value = school.nama;
+                currentSearchSchool = school.nama;
+                hideSchoolSuggestions();
+                document.getElementById('clearSchoolSearch').style.display = 'block';
+                
+                // Filter dan zoom ke sekolah
+                filterSchools();
+                selectSchool(schoolId);
+            }
+        }
+        
+        // Clear school search
+        function clearSchoolSearch() {
+            document.getElementById('searchSchool').value = '';
+            currentSearchSchool = '';
+            document.getElementById('clearSchoolSearch').style.display = 'none';
+            hideSchoolSuggestions();
+            filterSchools();
+        }
+        
+        // Close suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#searchSchool') && !e.target.closest('#schoolSuggestions')) {
+                hideSchoolSuggestions();
+            }
+        });
+        
+        // ===================================
+        // FILTER SCHOOLS
+        // ===================================
+        
+        function filterSchools() {
+            let filtered = [...sekolahData];
+            
+            // Filter by school name/NPSN
+            if (currentSearchSchool) {
+                const keyword = currentSearchSchool.toLowerCase();
+                filtered = filtered.filter(school => {
+                    const nama = school.nama.toLowerCase();
+                    const npsn = school.npsn ? school.npsn.toLowerCase() : '';
+                    return nama.includes(keyword) || npsn.includes(keyword);
+                });
+            }
+            
+            // Filter by kecamatan
+            if (currentFilterKecamatan) {
+                filtered = filtered.filter(s => s.kecamatan === currentFilterKecamatan);
+            }
+            
+            // Update display
+            displaySchoolsOnMap(filtered);
+            displaySchoolList(filtered);
+        }
+        
+        // Reset all filters
+        function resetAllFilters() {
+            document.getElementById('searchSchool').value = '';
+            document.getElementById('filterKecamatan').value = '';
+            document.getElementById('clearSchoolSearch').style.display = 'none';
+            
+            currentSearchSchool = '';
+            currentFilterKecamatan = '';
+            
+            hideSchoolSuggestions();
+            
+            // Remove user marker
+            if (userMarker) {
+                map.removeLayer(userMarker);
+                userMarker = null;
+            }
+            
+            // Reset map view
+            map.setView([-0.9371, 100.3600], 13);
+            
+            // Display all schools
+            displaySchoolsOnMap();
+            displaySchoolList(sekolahData);
+        }
+        
+        // ===================================
         // DISPLAY SCHOOLS ON MAP
         // ===================================
         
-        function displaySchoolsOnMap() {
+        function displaySchoolsOnMap(schools = null) {
             // Clear existing markers and zones
             clearMap();
             
             const showZones = document.getElementById('showZones').checked;
-            const filterKec = document.getElementById('filterKecamatan').value;
+            const schoolsToDisplay = schools || sekolahData;
             
-            // Filter schools
-            const filteredSchools = filterKec 
-                ? sekolahData.filter(s => s.kecamatan === filterKec)
-                : sekolahData;
-            
-            filteredSchools.forEach(school => {
+            schoolsToDisplay.forEach(school => {
                 // Add zone circle
                 if (showZones) {
                     const circle = L.circle([school.latitude, school.longitude], {
@@ -455,7 +673,13 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
             });
             
             // Update list title
-            updateListTitle(filteredSchools.length);
+            updateListTitle(schoolsToDisplay.length);
+            
+            // Fit bounds if filtered
+            if (schools && schools.length > 0 && schools.length < sekolahData.length) {
+                const bounds = L.latLngBounds(schools.map(s => [s.latitude, s.longitude]));
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
         }
         
         // ===================================
@@ -502,7 +726,7 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
                     );
                 },
                 function(error) {
-                    alert('Tidak dapat mengakses lokasi Anda. Pastikan Anda mengizinkan akses lokasi di browser.');
+                    alert('Tidak dapat mengakses lokasi Anda. Pastikan Anda memberikan izin akses lokasi.');
                     console.error('Geolocation error:', error);
                 }
             );
@@ -544,8 +768,6 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
         // ===================================
         
         function calculateDistances(userLat, userLng) {
-            const filterKec = document.getElementById('filterKecamatan').value;
-            
             // Calculate distance for each school
             let schoolsWithDistance = sekolahData.map(school => {
                 const distance = hitungJarak(
@@ -561,9 +783,18 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
                 };
             });
             
-            // Filter by kecamatan
-            if (filterKec) {
-                schoolsWithDistance = schoolsWithDistance.filter(s => s.kecamatan === filterKec);
+            // Apply current filters
+            if (currentSearchSchool) {
+                const keyword = currentSearchSchool.toLowerCase();
+                schoolsWithDistance = schoolsWithDistance.filter(school => {
+                    const nama = school.nama.toLowerCase();
+                    const npsn = school.npsn ? school.npsn.toLowerCase() : '';
+                    return nama.includes(keyword) || npsn.includes(keyword);
+                });
+            }
+            
+            if (currentFilterKecamatan) {
+                schoolsWithDistance = schoolsWithDistance.filter(s => s.kecamatan === currentFilterKecamatan);
             }
             
             // Sort by distance
@@ -587,6 +818,7 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
                         <p class="mt-3">Tidak ada sekolah ditemukan</p>
                     </div>
                 `;
+                updateListTitle(0);
                 return;
             }
             
@@ -729,20 +961,13 @@ $total_kuota = array_sum(array_column($sekolah_list, 'kuota'));
         
         // Toggle zones
         document.getElementById('showZones').addEventListener('change', function() {
-            displaySchoolsOnMap();
+            filterSchools();
         });
         
         // Filter kecamatan
         document.getElementById('filterKecamatan').addEventListener('change', function() {
-            displaySchoolsOnMap();
-            
-            const filterValue = this.value;
-            if (filterValue) {
-                const filtered = sekolahData.filter(s => s.kecamatan === filterValue);
-                displaySchoolList(filtered);
-            } else {
-                displaySchoolList(sekolahData);
-            }
+            currentFilterKecamatan = this.value;
+            filterSchools();
         });
         
         // ===================================
